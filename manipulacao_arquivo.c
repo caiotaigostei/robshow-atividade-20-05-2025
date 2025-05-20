@@ -90,11 +90,85 @@ void buscar_produto(FILE* f) {
 
 
 void atualizar_produto(FILE* f) {
+    int codigo;
+    Produto p;
+    int encontrado = 0;
+
+    printf("Digite o código do produto que deseja atualizar: ");
+    scanf("%d", &codigo);
+
+    f = fopen("produtos.dat", "r+b");
+    if (!f) {
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    while (fread(&p, sizeof(Produto), 1, f)) {
+        if (p.ativo && p.codigo == codigo) {
+            printf("Produto atual encontrado:\n");
+            printf("Nome: %s\nPreco: %.2f\nQuantidade: %d\n", p.nome, p.preco, p.quantidade);
+
+            getchar(); // Limpar buffer
+            printf("\nNovo nome: ");
+            fgets(p.nome, 50, stdin);
+            p.nome[strcspn(p.nome, "\n")] = '\0';
+
+            printf("Novo preco: ");
+            scanf("%f", &p.preco);
+
+            printf("Nova quantidade: ");
+            scanf("%d", &p.quantidade);
+
+            fseek(f, -sizeof(Produto), SEEK_CUR); // Voltar para o início do produto atual
+            fwrite(&p, sizeof(Produto), 1, f);
+
+            printf("Produto atualizado com sucesso.\n");
+            encontrado = 1;
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Produto não encontrado.\n");
+    }
+
+    fclose(f);
 }
 
 
 void remover_produto(FILE* f) {
+    int codigo;
+    Produto p;
+    int encontrado = 0;
+
+    printf("Digite o código do produto que deseja remover: ");
+    scanf("%d", &codigo);
+
+    f = fopen("produtos.dat", "r+b");
+    if (!f) {
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    while (fread(&p, sizeof(Produto), 1, f)) {
+        if (p.ativo && p.codigo == codigo) {
+            p.ativo = 0; // Marca como removido
+            fseek(f, -sizeof(Produto), SEEK_CUR);
+            fwrite(&p, sizeof(Produto), 1, f);
+
+            printf("Produto removido com sucesso.\n");
+            encontrado = 1;
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Produto não encontrado.\n");
+    }
+
+    fclose(f);
 }
+
 
 
 int main() {
@@ -115,8 +189,8 @@ int main() {
             case 1: cadastrar_produto(f); break;
             case 2: listar_produtos(f); break;
             case 3: buscar_produto(f); break;
-            //case 4: atualizar_produto(f); break;
-            //case 5: remover_produto(f); break;
+            case 4: atualizar_produto(f); break;
+            case 5: remover_produto(f); break;
             case 6: printf("Saindo...\n"); break;
             default: printf("Opcao invalida!\n");
         }
